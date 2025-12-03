@@ -54,7 +54,7 @@ app = Flask(__name__)
 
 @app.route('/commits-data/')
 def commits_data():
-    url = "https://api.github.com/repos/SaraLyna/Projet_metriques_5MCSI_Sara/commits"
+    url = "https://api.github.com/repos/SaraLyna/Projet_metriques_5MCSI_Sara/commits?per_page=30"
     headers = {"User-Agent": "Metriques-App"}  # Obligatoire pour GitHub
 
     try:
