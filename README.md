@@ -88,6 +88,7 @@ Notions acquises de cette séquence :
 Vous avez vu dans cette séquence comment créer des secrets GiHUB afin de mettre en place de l'industrialisation continue.  
 L'utilité des scripts d'actions (C'est à dire des scripts exécutés lors des Commits) est très importante mais sortes malheureusement du cadre de cet atelier faute de temps. Toutefois, je vous invites à découvrir cet outil via les différentes sources du Web (Google, ChatGPT, etc..).  
 
+
 ---------------------------------------------------
 Séquence 4 : Exercices
 ---------------------------------------------------
