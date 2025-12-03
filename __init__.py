@@ -47,7 +47,7 @@ def extract_minutes(date_string):
 
 @app.route('/commits/')
 def commits():
-    url = "https://github.com/SaraLyna/Projet_metriques_5MCSI_Sara/commits"
+    url = "https://api.github.com/repos/SaraLyna/Projet_metriques_5MCSI_Sara/commits"
     response = requests.get(url)
     json_data = response.json()
 
