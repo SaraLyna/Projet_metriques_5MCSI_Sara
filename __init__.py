@@ -36,6 +36,35 @@ def mongraphique():
 @app.route("/histogramme/")
 def monhistogramme():
     return render_template('histogramme.html')
+
+
+@app.route('/extract-minutes/<date_string>')
+def extract_minutes(date_string):
+    date_object = datetime.strptime(date_string, '%Y-%m-%dT%H:%M:%SZ')
+    minutes = date_object.minute
+    return jsonify({'minutes': minutes})
+
+
+@app.route('/commits/')
+def commits():
+    url = "https://github.com/SaraLyna/Projet_metriques_5MCSI_Sara/commits"
+    response = requests.get(url)
+    json_data = response.json()
+
+    minutes_list = []
+
+    for commit in json_data:
+        raw_date = commit["commit"]["author"]["date"]
+        date_obj = datetime.strptime(raw_date, "%Y-%m-%dT%H:%M:%SZ")
+        minutes_list.append(date_obj.minute)
+
+    # Compter le nombre de commits par minute
+    counts = Counter(minutes_list)
+
+    # Format Google Charts (clé → valeur)
+    results = [{"minute": minute, "count": counts[minute]} for minute in sorted(counts.keys())]
+
+    return jsonify(results=results)
   
 if __name__ == "__main__":
   app.run(debug=True)
