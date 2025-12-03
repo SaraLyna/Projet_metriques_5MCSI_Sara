@@ -47,25 +47,35 @@ def extract_minutes(date_string):
 
 @app.route('/commits-data/')
 def commits_data():
+
     url = "https://api.github.com/repos/SaraLyna/Projet_metriques_5MCSI_Sara/commits"
-    response = requests.get(url)
-    json_data = response.json()
+
+    # GitHub bloque si on n’envoie pas un User-Agent
+    headers = {"User-Agent": "Metriques-App"}
+
+    response = requests.get(url, headers=headers)
+
+    # Si GitHub renvoie une erreur -> message clair
+    if response.status_code != 200:
+        return jsonify({"error": "GitHub API error", "status": response.status_code})
+
+    commits = response.json()
 
     minutes_list = []
 
-    for commit in json_data:
-        raw_date = commit["commit"]["author"]["date"]
-        date_obj = datetime.strptime(raw_date, "%Y-%m-%dT%H:%M:%SZ")
-        minutes_list.append(date_obj.minute)
+    for commit in commits:
+        try:
+            date_string = commit["commit"]["author"]["date"]
+            date_obj = datetime.strptime(date_string, '%Y-%m-%dT%H:%M:%SZ')
+            minutes_list.append(date_obj.minute)
+        except:
+            pass  # Ignore les commits mal formés
 
-    # Compter le nombre de commits par minute
-    counts = Counter(minutes_list)
+    minute_counts = Counter(minutes_list)
 
-    # Format Google Charts (clé → valeur)
-    results = [{"minute": minute, "count": counts[minute]} for minute in sorted(counts.keys())]
+    results = [{"minute": m, "count": c} for m, c in sorted(minute_counts.items())]
 
-    return jsonify(results=results)
-
+    return jsonify({"results": results})
 
 @app.route('/commits/')
 def commits_page():
