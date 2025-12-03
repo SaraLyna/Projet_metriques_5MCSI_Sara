@@ -45,47 +45,54 @@ def extract_minutes(date_string):
     return jsonify({'minutes': minutes})
 
 
+from flask import Flask, jsonify, render_template
+import requests
+from datetime import datetime
+from collections import Counter
+
+app = Flask(__name__)
+
 @app.route('/commits-data/')
 def commits_data():
     url = "https://api.github.com/repos/SaraLyna/Projet_metriques_5MCSI_Sara/commits"
-    headers = {"User-Agent": "Metriques-App"}
+    headers = {"User-Agent": "Metriques-App"}  # Obligatoire pour GitHub
 
-    response = requests.get(url, headers=headers)
+    try:
+        response = requests.get(url, headers=headers, timeout=10)
+    except Exception as e:
+        return jsonify({"error": "Request failed", "details": str(e)}), 500
 
     if response.status_code != 200:
-        return jsonify({"error": "GitHub API error", "status": response.status_code, "details": response.text})
+        return jsonify({"error": "GitHub API error", "status": response.status_code, "text": response.text}), 500
 
     commits = response.json()
-
-    # Vérifier que c’est bien une liste
     if not isinstance(commits, list):
-        return jsonify({"error": "Unexpected response format", "data": commits})
+        return jsonify({"error": "Unexpected API response", "data": commits}), 500
 
     minutes_list = []
-
     for commit in commits:
         try:
             author = commit.get("commit", {}).get("author")
             if author and "date" in author:
-                date_string = author["date"]
-                date_obj = datetime.strptime(date_string, '%Y-%m-%dT%H:%M:%SZ')
+                date_obj = datetime.strptime(author["date"], '%Y-%m-%dT%H:%M:%SZ')
                 minutes_list.append(date_obj.minute)
         except Exception as e:
             print("Commit ignored:", e)
             continue
 
     if not minutes_list:
-        return jsonify({"error": "No valid commit dates found"})
+        return jsonify({"error": "No valid commit dates found"}), 500
 
     minute_counts = Counter(minutes_list)
     results = [{"minute": m, "count": c} for m, c in sorted(minute_counts.items())]
 
     return jsonify({"results": results})
 
-
+# Page HTML pour afficher l’histogramme
 @app.route('/commits/')
 def commits_page():
-    return render_template("commits.html")
+    return render_template('commits.html')
+
 
   
 if __name__ == "__main__":
