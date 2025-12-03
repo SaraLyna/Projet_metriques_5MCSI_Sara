@@ -44,45 +44,24 @@ def extract_minutes(date_string):
     minutes = date_object.minute
     return jsonify({'minutes': minutes})
 
-
-from flask import Flask, jsonify, render_template
-import requests
-from datetime import datetime
-from collections import Counter
-
-app = Flask(__name__)
+GITHUB_API_URL = "https://api.github.com/repos/SaraLyna/Projet_metriques_5MCSI_Sara/commits"
 
 @app.route('/commits-data/')
-def commits_data():
-    url = "https://api.github.com/repos/SaraLyna/Projet_metriques_5MCSI_Sara/commits?per_page=30"
-    headers = {"User-Agent": "Metriques-App"}
-
-    try:
-        response = requests.get(url, headers=headers, timeout=5)
-        response.raise_for_status()
-    except Exception as e:
-        return jsonify({"error": "Request failed", "details": str(e)}), 500
-
+def get_commits_data():
+    response = requests.get(GITHUB_API_URL)
     commits = response.json()
+    
+    # Extraire les minutes de chaque commit
     minutes_list = []
-
     for commit in commits:
-        author = commit.get("commit", {}).get("author")
-        if author and "date" in author:
-            try:
-                date_obj = datetime.strptime(author["date"], '%Y-%m-%dT%H:%M:%SZ')
-                minutes_list.append(date_obj.minute)
-            except:
-                continue
-
-    if not minutes_list:
-        return jsonify({"error": "No valid commit dates found"}), 500
-
-    minute_counts = Counter(minutes_list)
-    results = [{"minute": m, "count": c} for m, c in sorted(minute_counts.items())]
-
-    return jsonify({"results": results})
-
+        date_string = commit['commit']['author']['date']
+        date_object = datetime.strptime(date_string, '%Y-%m-%dT%H:%M:%SZ')
+        minutes_list.append(date_object.minute)
+    
+    # Compter le nombre de commits par minute
+    minutes_count = dict(Counter(minutes_list))
+    
+    return jsonify(minutes_count)
 
 
 
