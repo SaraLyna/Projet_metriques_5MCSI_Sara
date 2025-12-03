@@ -1,53 +1,39 @@
+<!DOCTYPE html>
 <html>
-<html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>Commits par minute</title>
-  <script src="https://www.gstatic.com/charts/loader.js"></script>
+    <title>Commits par minute</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <h1 style="text-align:center;">Commits par Minute</h1>
-  <div id="chart_div" style="width:900px; height:500px; margin:auto;"></div>
+    <h2>Nombre de commits par minute</h2>
+    <canvas id="commitsChart" width="600" height="400"></canvas>
 
-  <script>
-    google.charts.load('current', { packages: ['corechart'] });
-    google.charts.setOnLoadCallback(drawChart);
+    <script>
+        fetch('/commits-data/')
+            .then(response => response.json())
+            .then(data => {
+                const ctx = document.getElementById('commitsChart').getContext('2d');
+                const labels = Array.from({length: 60}, (_, i) => i); // minutes 0 à 59
+                const commits = labels.map(min => data[min] || 0);
 
-    function drawChart() {
-      fetch('/commits-data/')
-        .then(resp => resp.json())
-        .then(data => {
-          console.log("DATA REÇUE :", data);
-
-          if (!data.results || data.results.length === 0) {
-            document.getElementById('chart_div').innerHTML = "<p>Aucune donnée disponible</p>";
-            return;
-          }
-
-          var dataTable = new google.visualization.DataTable();
-          dataTable.addColumn('string', 'Minute');
-          dataTable.addColumn('number', 'Commits');
-
-          data.results.forEach(item => {
-            dataTable.addRow([item.minute.toString(), item.count]);
-          });
-
-          var options = {
-            title: 'Nombre de commits par minute',
-            legend: { position: 'none' },
-            colors: ['#4285F4'],
-            hAxis: { title: 'Minute (0–59)' },
-            vAxis: { title: 'Nombre de commits' }
-          };
-
-          var chart = new google.visualization.ColumnChart(document.getElementById('chart_div'));
-          chart.draw(dataTable, options);
-        })
-        .catch(err => {
-          console.error(err);
-          document.getElementById('chart_div').innerHTML = "<p>Erreur lors du chargement des données</p>";
-        });
-    }
-  </script>
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Commits par minute',
+                            data: commits,
+                            backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            x: { title: { display: true, text: 'Minute' } },
+                            y: { title: { display: true, text: 'Nombre de commits' }, beginAtZero: true }
+                        }
+                    }
+                });
+            });
+    </script>
 </body>
 </html>
