@@ -55,30 +55,25 @@ app = Flask(__name__)
 @app.route('/commits-data/')
 def commits_data():
     url = "https://api.github.com/repos/SaraLyna/Projet_metriques_5MCSI_Sara/commits?per_page=30"
-    headers = {"User-Agent": "Metriques-App"}  # Obligatoire pour GitHub
+    headers = {"User-Agent": "Metriques-App"}
 
     try:
-        response = requests.get(url, headers=headers, timeout=10)
+        response = requests.get(url, headers=headers, timeout=5)
+        response.raise_for_status()
     except Exception as e:
         return jsonify({"error": "Request failed", "details": str(e)}), 500
 
-    if response.status_code != 200:
-        return jsonify({"error": "GitHub API error", "status": response.status_code, "text": response.text}), 500
-
     commits = response.json()
-    if not isinstance(commits, list):
-        return jsonify({"error": "Unexpected API response", "data": commits}), 500
-
     minutes_list = []
+
     for commit in commits:
-        try:
-            author = commit.get("commit", {}).get("author")
-            if author and "date" in author:
+        author = commit.get("commit", {}).get("author")
+        if author and "date" in author:
+            try:
                 date_obj = datetime.strptime(author["date"], '%Y-%m-%dT%H:%M:%SZ')
                 minutes_list.append(date_obj.minute)
-        except Exception as e:
-            print("Commit ignored:", e)
-            continue
+            except:
+                continue
 
     if not minutes_list:
         return jsonify({"error": "No valid commit dates found"}), 500
@@ -88,7 +83,9 @@ def commits_data():
 
     return jsonify({"results": results})
 
-# Page HTML pour afficher l’histogramme
+
+
+
 @app.route('/commits/')
 def commits_page():
     return render_template('commits.html')
