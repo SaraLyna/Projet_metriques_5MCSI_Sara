@@ -47,35 +47,41 @@ def extract_minutes(date_string):
 
 @app.route('/commits-data/')
 def commits_data():
-
     url = "https://api.github.com/repos/SaraLyna/Projet_metriques_5MCSI_Sara/commits"
-
-    # GitHub bloque si on n’envoie pas un User-Agent
     headers = {"User-Agent": "Metriques-App"}
 
     response = requests.get(url, headers=headers)
 
-    # Si GitHub renvoie une erreur -> message clair
     if response.status_code != 200:
-        return jsonify({"error": "GitHub API error", "status": response.status_code})
+        return jsonify({"error": "GitHub API error", "status": response.status_code, "details": response.text})
 
     commits = response.json()
+
+    # Vérifier que c’est bien une liste
+    if not isinstance(commits, list):
+        return jsonify({"error": "Unexpected response format", "data": commits})
 
     minutes_list = []
 
     for commit in commits:
         try:
-            date_string = commit["commit"]["author"]["date"]
-            date_obj = datetime.strptime(date_string, '%Y-%m-%dT%H:%M:%SZ')
-            minutes_list.append(date_obj.minute)
-        except:
-            pass  # Ignore les commits mal formés
+            author = commit.get("commit", {}).get("author")
+            if author and "date" in author:
+                date_string = author["date"]
+                date_obj = datetime.strptime(date_string, '%Y-%m-%dT%H:%M:%SZ')
+                minutes_list.append(date_obj.minute)
+        except Exception as e:
+            print("Commit ignored:", e)
+            continue
+
+    if not minutes_list:
+        return jsonify({"error": "No valid commit dates found"})
 
     minute_counts = Counter(minutes_list)
-
     results = [{"minute": m, "count": c} for m, c in sorted(minute_counts.items())]
 
     return jsonify({"results": results})
+
 
 @app.route('/commits/')
 def commits_page():
