@@ -45,8 +45,8 @@ def extract_minutes(date_string):
     return jsonify({'minutes': minutes})
 
 
-@app.route('/commits/')
-def commits():
+@app.route('/commits-data/')
+def commits_data():
     url = "https://api.github.com/repos/SaraLyna/Projet_metriques_5MCSI_Sara/commits"
     response = requests.get(url)
     json_data = response.json()
@@ -65,6 +65,12 @@ def commits():
     results = [{"minute": minute, "count": counts[minute]} for minute in sorted(counts.keys())]
 
     return jsonify(results=results)
+
+
+@app.route('/commits/')
+def commits_page():
+    return render_template("commits.html")
+
   
 if __name__ == "__main__":
   app.run(debug=True)
