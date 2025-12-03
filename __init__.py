@@ -48,18 +48,20 @@ GITHUB_API_URL = "https://api.github.com/repos/SaraLyna/Projet_metriques_5MCSI_S
 
 @app.route('/commits-data/')
 def get_commits_data():
-    response = requests.get(GITHUB_API_URL)
-    commits = response.json()
+    # Récupérer les données depuis l'API GitHub
+    response = urlopen(GITHUB_API_URL)
+    raw_content = response.read()
+    commits = json.loads(raw_content.decode('utf-8'))
     
-    # Extraire les minutes de chaque commit
-    minutes_list = []
+    # Initialiser un dictionnaire pour compter les commits par minute
+    minutes_count = {i: 0 for i in range(60)}
+    
+    # Extraire les minutes de chaque commit et compter
     for commit in commits:
         date_string = commit['commit']['author']['date']
         date_object = datetime.strptime(date_string, '%Y-%m-%dT%H:%M:%SZ')
-        minutes_list.append(date_object.minute)
-    
-    # Compter le nombre de commits par minute
-    minutes_count = dict(Counter(minutes_list))
+        minute = date_object.minute
+        minutes_count[minute] += 1
     
     return jsonify(minutes_count)
 
